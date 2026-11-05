@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Страница</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; }
+    a:focus, button:focus { outline: none; }
+    .header { display: flex; gap: 16px; padding: 16px; }
+    .banner { width: 900px; height: 120px; overflow: hidden; background: #eee; }
+    .banner p { font-size: 32px; margin: 0; }
+    .muted { color: #aaa; }
+    .menu-closed { opacity: 0; position: absolute; }
+    .card { width: 200px; height: 48px; overflow: hidden; }
+    .icon { width: 24px; height: 24px; background: #333; border: 0; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo" onclick="location.href='#'">Логотип</div>
+    <button class="icon"></button>
+    <a href="#">Подробнее</a>
+    <a href="#">Подробнее</a>
+  </div>
+  <div class="menu-closed"><a href="#one">Скрытая ссылка 1</a><a href="#two">Скрытая ссылка 2</a></div>
+  <div class="banner"><p>Очень длинный заголовок баннера, который при увеличении масштаба не помещается по высоте и обрезается</p></div>
+  <div class="card"><p>Карточка фиксированной высоты: при увеличении масштаба текст не помещается и обрезается снизу</p></div>
+  <p class="muted">Серый текст с низким контрастом</p>
+  <img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" width="200" height="100">
+  <form>
+    <input type="text" placeholder="Ваше имя">
+    <input type="email" placeholder="E-mail">
+    <button type="submit">Отправить</button>
+  </form>
+</body>
+</html>

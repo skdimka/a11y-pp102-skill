@@ -1,0 +1,21 @@
+{
+  "name": "a11y-pp102-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Автоматические проверки доступности по ПП РФ № 102: axe-core, масштаб 200%, обход клавиатурой",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "axe": "node axe-scan.mjs",
+    "reflow": "node reflow-200.mjs",
+    "keyboard": "node keyboard-walk.mjs",
+    "selftest": "node axe-scan.mjs --urls fixtures/urls.txt --out reports/axe.md && node reflow-200.mjs --urls fixtures/urls.txt --out reports/reflow.md && node keyboard-walk.mjs --urls fixtures/urls.txt --out reports/keyboard.md"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "playwright": "^1.50.0"
+  }
+}

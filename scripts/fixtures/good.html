@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Запись на приём — Пример организации</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; }
+    :focus-visible { outline: 2px solid #0050b3; outline-offset: 2px; }
+    .skip-link { position: absolute; left: 1rem; top: -100px; background: #fff; padding: 8px; }
+    .skip-link:focus { top: 1rem; }
+    header, main, footer { padding: 16px; }
+    .banner { max-width: 900px; min-height: 120px; background: #eee; }
+    .banner p { font-size: 2rem; margin: 0; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+    .field { display: grid; gap: 4px; margin-bottom: 12px; max-width: 24rem; }
+    input { font: inherit; padding: 8px; border: 1px solid #555; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Перейти к основному содержимому</a>
+  <header>
+    <a href="/">Пример организации<span class="visually-hidden">, на главную</span></a>
+    <nav aria-label="Основное меню">
+      <ul>
+        <li><a href="/services/">Услуги</a></li>
+        <li><a href="/contacts/" aria-current="page">Контакты</a></li>
+      </ul>
+    </nav>
+    <button type="button"><span class="visually-hidden">Поиск по сайту</span><svg aria-hidden="true" focusable="false" width="16" height="16"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor"/></svg></button>
+  </header>
+  <main id="main" tabindex="-1">
+    <h1>Запись на приём</h1>
+    <div class="banner"><p>Запишитесь на приём онлайн — это займёт пять минут</p></div>
+    <form>
+      <div class="field">
+        <label for="name">Имя</label>
+        <input id="name" name="name" autocomplete="name" required>
+      </div>
+      <div class="field">
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" autocomplete="email" required aria-describedby="email-hint">
+        <p id="email-hint">Пришлём подтверждение записи</p>
+      </div>
+      <button type="submit">Записаться</button>
+    </form>
+  </main>
+  <footer>
+    <a href="/files/rules.pdf">Правила записи (PDF, 120 КБ)</a>
+  </footer>
+</body>
+</html>
