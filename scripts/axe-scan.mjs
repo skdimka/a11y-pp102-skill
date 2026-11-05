@@ -48,9 +48,21 @@ async function scan(browser, url, width, height) {
   try {
     await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
     const result = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'])
       .analyze();
-    return { url, violations: result.violations, incomplete: result.incomplete };
+    const isWcag = (v) => v.tags.some((t) => /^wcag\d/.test(t));
+    const meta = await page.evaluate(() => ({
+      title: document.title.trim(),
+      h1: [...document.querySelectorAll('h1')].filter((h) => h.getClientRects().length).length,
+      lang: document.documentElement.getAttribute('lang') || '',
+    }));
+    return {
+      url,
+      ...meta,
+      violations: result.violations.filter(isWcag),
+      practice: result.violations.filter((v) => !isWcag(v)),
+      incomplete: result.incomplete.filter(isWcag),
+    };
   } catch (error) {
     return { url, error: error.message };
   } finally {
@@ -100,6 +112,41 @@ function render(results) {
         `| ${cell(url)} | [${cell(v.id)}](${v.helpUrl}) | ${ppLabel(letters)} | ${criteria.join(', ') || '—'} | ${IMPACT_RU[v.impact] ?? v.impact ?? '—'} | ${v.nodes.length} | \`${cell(target)}\` | ${cell(v.help)} |`,
       );
     }
+    lines.push('');
+  }
+
+  const practice = results.flatMap((r) => (r.practice ?? []).map((v) => ({ url: r.url, v })));
+  if (practice.length) {
+    lines.push('## Рекомендации best-practice (не критерии WCAG, но влияют на «а» и «е»)', '');
+    lines.push('| Страница | Правило | Элементов | Пример элемента | Что не так |');
+    lines.push('|---|---|---|---|---|');
+    for (const { url, v } of practice) {
+      lines.push(`| ${cell(url)} | [${cell(v.id)}](${v.helpUrl}) | ${v.nodes.length} | \`${cell(v.nodes[0]?.target?.join(' ') ?? '')}\` | ${cell(v.help)} |`);
+    }
+    lines.push('');
+  }
+
+  const ok = results.filter((r) => !r.error);
+  const byTitle = new Map();
+  for (const r of ok) {
+    const key = r.title.toLowerCase();
+    if (!byTitle.has(key)) byTitle.set(key, []);
+    byTitle.get(key).push(r.url);
+  }
+  const titleIssues = [];
+  for (const r of ok) {
+    const problems = [];
+    if (!r.title) problems.push('пустой <title>');
+    else if (byTitle.get(r.title.toLowerCase()).length > 1) problems.push(`<title> повторяется на ${byTitle.get(r.title.toLowerCase()).length} стр.`);
+    if (r.h1 === 0) problems.push('нет видимого h1');
+    if (r.h1 > 1) problems.push(`видимых h1: ${r.h1}`);
+    if (!r.lang) problems.push('нет lang у <html>');
+    if (problems.length) titleIssues.push({ r, problems });
+  }
+  if (titleIssues.length) {
+    lines.push('## Заголовки страниц — ПП № 102, «е»', '');
+    lines.push('| Страница | <title> | Проблемы |', '|---|---|---|');
+    for (const { r, problems } of titleIssues) lines.push(`| ${cell(r.url)} | ${cell(r.title)} | ${cell(problems.join('; '))} |`);
     lines.push('');
   }
 

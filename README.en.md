@@ -31,7 +31,7 @@ Paragraph 2 of the Requirements, subparagraphs «а»–«н»:
 | «ж» | Link purpose is clear from the link text or its context | 2.4.4 |
 | «з» | Text contrast at least 4.5:1 (3:1 for large text) | 1.4.3 |
 | «и» | Information is not conveyed by colour, shape or position alone | 1.3.3, 1.4.1, 4.1.3 |
-| «к» | Moving and auto-updating content can be paused; no more than 3 flashes per second | 2.2.2, 2.3.1 |
+| «к» | Moving and auto-updating content can be paused; no flashing that may cause discomfort (e.g. more than 3 flashes per second) | 2.2.2, 2.3.1 |
 | «л» | Hovering does not change context | 3.2.1, 1.4.13 |
 | «м» | Form fields have labels; errors are described in text and announced | 3.3.1, 3.3.2, 4.1.3 |
 | «н» | Readable, non-decorative typeface with distinguishable characters | — |
@@ -79,7 +79,7 @@ node keyboard-walk.mjs --url https://example.ru/ --out reports/keyboard.md
 
 ## Disclaimer
 
-- **Not legal advice.** The skill helps meet the technical requirements but does not certify legal compliance. The official text of the decree prevails.
+- **Not legal advice.** The skill helps meet the technical requirements but does not certify legal compliance. The [official text of the decree](http://publication.pravo.gov.ru/document/0001202602100010) (publication No. 0001202602100010, 10 Feb 2026) prevails.
 - **Automated checks do not replace manual testing** with a keyboard and a screen reader.
 - This is an independent project, not affiliated with any government body, auditing organization or standards developer.
 - All code samples, texts and test pages were written for this repository and are fictional. The repository contains no third-party materials, code or data from specific websites.
