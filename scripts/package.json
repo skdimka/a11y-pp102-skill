@@ -12,7 +12,7 @@
     "axe": "node axe-scan.mjs",
     "reflow": "node reflow-200.mjs",
     "keyboard": "node keyboard-walk.mjs",
-    "selftest": "node axe-scan.mjs --urls fixtures/urls.txt --out reports/axe.md && node reflow-200.mjs --urls fixtures/urls.txt --out reports/reflow.md && node keyboard-walk.mjs --urls fixtures/urls.txt --out reports/keyboard.md"
+    "selftest": "node selftest.mjs"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.0",

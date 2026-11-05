@@ -77,6 +77,8 @@ node reflow-200.mjs --urls urls.txt --out reports/reflow.md --screenshots report
 node keyboard-walk.mjs --url https://example.ru/ --out reports/keyboard.md
 ```
 
+Options: `--width`, `--height`, `--zoom`, `--wait`, `--max`, `--json <file>`. `npm run selftest` checks the scripts themselves against the bundled fixtures.
+
 ## Disclaimer
 
 - **Not legal advice.** The skill helps meet the technical requirements but does not certify legal compliance. The [official text of the decree](http://publication.pravo.gov.ru/document/0001202602100010) (publication No. 0001202602100010, 10 Feb 2026) prevails.

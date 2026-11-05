@@ -95,7 +95,7 @@ node reflow-200.mjs --urls urls.txt --out reports/reflow.md --screenshots report
 node keyboard-walk.mjs --url https://example.ru/ --out reports/keyboard.md
 ```
 
-`urls.txt` — по адресу на строку (`#` — комментарий). Подходят `https://`, `file://` и локальные пути. Параметры: `--width`, `--height` (размер окна, по умолчанию 1280×800), `--zoom` (для `reflow-200`, по умолчанию 2), `--max` (шагов Tab для `keyboard-walk`, по умолчанию 300).
+`urls.txt` — по адресу на строку (`#` — комментарий). Подходят `https://`, `file://` и локальные пути; статическую сборку лучше раздать локальным сервером (`python3 -m http.server`). Параметры: `--width`, `--height` (размер окна, по умолчанию 1280×800), `--zoom` и `--wait` (для `reflow-200`, по умолчанию 2 и 2000 мс), `--max` (шагов Tab для `keyboard-walk`, по умолчанию 300), `--json <файл>` (сырые данные). `npm run selftest` проверяет сами скрипты на тестовых страницах.
 
 ## Ограничения и оговорки
 

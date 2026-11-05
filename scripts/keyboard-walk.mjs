@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-import { parseArgs, collectUrls, output, cell } from './lib.mjs';
+import { parseArgs, collectUrls, output, outputJson, cell } from './lib.mjs';
 
 const NAMED_ROLES = new Set(['button', 'link', 'textbox', 'combobox', 'checkbox', 'radio', 'switch', 'tab', 'menuitem', 'option', 'slider', 'spinbutton', 'searchbox', 'listbox']);
 
@@ -162,7 +162,7 @@ function parseAria(snapshot) {
 }
 
 async function walk(browser, url, maxSteps, width, height) {
-  const context = await browser.newContext({ viewport: { width, height }, locale: 'ru-RU' });
+  const context = await browser.newContext({ viewport: { width, height }, locale: 'ru-RU', reducedMotion: 'reduce' });
   const page = await context.newPage();
   const steps = [];
   let extra = { clickable: [], linkIssues: [] };
@@ -178,7 +178,11 @@ async function walk(browser, url, maxSteps, width, height) {
         stopReason = `Tab увёл на другую страницу: ${page.url()}`;
         break;
       }
-      const info = await page.evaluate(snapshotFocused, { checkFocus: true });
+      let info = await page.evaluate(snapshotFocused, { checkFocus: true });
+      if (info?.hiddenReason) {
+        await page.waitForTimeout(700);
+        info = await page.evaluate(snapshotFocused, { checkFocus: true });
+      }
       if (!info) {
         if (steps.length) {
           stopReason = 'фокус вернулся к началу страницы';
@@ -295,4 +299,5 @@ for (const url of urls) {
   results.push(await walk(browser, url, maxSteps, width, height));
 }
 await browser.close();
+await outputJson(args, results);
 await output(args, render(results));

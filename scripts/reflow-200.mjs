@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { parseArgs, collectUrls, output, cell } from './lib.mjs';
+import { parseArgs, collectUrls, output, outputJson, cell } from './lib.mjs';
 
 function inspect() {
   const vw = document.documentElement.clientWidth;
@@ -124,8 +124,35 @@ function inspect() {
     });
   }
 
+  const vh = document.documentElement.clientHeight;
+  const overlays = [];
+  for (const el of document.body.querySelectorAll('*')) {
+    const style = getComputedStyle(el);
+    if (style.position !== 'fixed' && style.position !== 'sticky') continue;
+    if (!isVisible(el)) continue;
+    let parent = el.parentElement;
+    let nested = false;
+    while (parent && parent !== document.body) {
+      const ps = getComputedStyle(parent).position;
+      if (ps === 'fixed' || ps === 'sticky') {
+        nested = true;
+        break;
+      }
+      parent = parent.parentElement;
+    }
+    if (nested) continue;
+    const r = el.getBoundingClientRect();
+    const w = Math.max(0, Math.min(r.right, vw) - Math.max(r.left, 0));
+    const h = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0));
+    const share = (w * h) / (vw * vh);
+    if (share < 0.3) continue;
+    if (share > 0.95 && (el.matches('dialog[open], [role="dialog"], [aria-modal="true"]') || el.querySelector('dialog[open], [aria-modal="true"]'))) continue;
+    overlays.push({ selector: describe(el), position: style.position, share: Math.round(share * 100), text: el.innerText.trim().replace(/\s+/g, ' ').slice(0, 80) });
+  }
+
   return {
     viewportWidth: vw,
+    overlays: overlays.slice(0, 10),
     scrollWidth: document.documentElement.scrollWidth,
     viewportIssues,
     overflowing: overflowing.slice(0, 30),
@@ -141,6 +168,7 @@ const baseHeight = Number(args.height ?? 800);
 const zoom = Number(args.zoom ?? 2);
 const width = Math.round(baseWidth / zoom);
 const height = Math.round(baseHeight / zoom);
+const settle = Number(args.wait ?? 2000);
 const shots = typeof args.screenshots === 'string' ? args.screenshots : null;
 if (shots) await mkdir(shots, { recursive: true });
 
@@ -153,11 +181,18 @@ for (const [index, url] of urls.entries()) {
   const page = await context.newPage();
   try {
     await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(settle);
     const data = await page.evaluate(inspect);
     if (shots) {
       const file = join(shots, `${String(index + 1).padStart(3, '0')}.png`);
-      await page.screenshot({ path: file, fullPage: true });
+      const pageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+      const maxHeight = Math.floor(16000 / zoom);
+      if (pageHeight > maxHeight) {
+        await page.screenshot({ path: file, fullPage: true, clip: { x: 0, y: 0, width, height: maxHeight } });
+        data.screenshotNote = `первые ${maxHeight} px из ${pageHeight}`;
+      } else {
+        await page.screenshot({ path: file, fullPage: true });
+      }
       data.screenshot = file;
     }
     results.push({ url, ...data });
@@ -171,23 +206,28 @@ await browser.close();
 
 const lines = [`# Масштаб ${zoom * 100}% (окно ${baseWidth}×${baseHeight} → ${width}×${height} CSS px) — ПП № 102, «б»`, ''];
 lines.push('Эвристика: намеренно прокручиваемые таблицы, карты и слайдеры могут попасть в список — проверьте глазами.', '');
-lines.push('| Страница | Горизонтальная прокрутка | Viewport | За краем экрана | Обрезанный текст | Усечённый текст |');
-lines.push('|---|---|---|---|---|---|');
+lines.push('| Страница | Горизонтальная прокрутка | Viewport | За краем экрана | Обрезанный текст | Перекрывающие слои | Усечённый текст |');
+lines.push('|---|---|---|---|---|---|---|');
 for (const r of results) {
   if (r.error) {
-    lines.push(`| ${cell(r.url)} | ошибка: ${cell(r.error)} | | | | |`);
+    lines.push(`| ${cell(r.url)} | ошибка: ${cell(r.error)} | | | | | |`);
     continue;
   }
   const scroll = r.scrollWidth > r.viewportWidth + 1 ? `да, +${r.scrollWidth - r.viewportWidth}px` : 'нет';
-  lines.push(`| ${cell(r.url)} | ${scroll} | ${r.viewportIssues.join(', ') || 'ок'} | ${r.overflowing.length} | ${r.clipped.length} | ${r.truncated.length} |`);
+  lines.push(`| ${cell(r.url)} | ${scroll} | ${r.viewportIssues.join(', ') || 'ок'} | ${r.overflowing.length} | ${r.clipped.length} | ${r.overlays.length} | ${r.truncated.length} |`);
 }
 lines.push('');
 lines.push('«Усечённый текст» — намеренное сокращение (line-clamp, многоточие). Это допустимо, если полный текст доступен (на детальной странице, по кнопке «Показать полностью», в title не считается).', '');
 
 for (const r of results) {
-  if (r.error || (!r.overflowing.length && !r.clipped.length && !r.truncated.length && !r.viewportIssues.length && r.scrollWidth <= r.viewportWidth + 1)) continue;
+  if (r.error || (!r.overflowing.length && !r.clipped.length && !r.truncated.length && !r.overlays.length && !r.viewportIssues.length && r.scrollWidth <= r.viewportWidth + 1)) continue;
   lines.push(`## ${r.url}`, '');
-  if (r.screenshot) lines.push(`Скриншот: \`${r.screenshot}\``, '');
+  if (r.screenshot) lines.push(`Скриншот: \`${r.screenshot}\`${r.screenshotNote ? ` (${r.screenshotNote})` : ''}`, '');
+  if (r.overlays.length) {
+    lines.push('Фиксированные слои, закрывающие экран при увеличении (cookie-баннеры, плавающие шапки, виджеты) — проверьте, что их можно закрыть и они не прячут контент и фокус:', '', '| Элемент | position | Доля экрана | Текст |', '|---|---|---|---|');
+    for (const o of r.overlays) lines.push(`| \`${cell(o.selector)}\` | ${o.position} | ${o.share}% | ${cell(o.text)} |`);
+    lines.push('');
+  }
   if (r.viewportIssues.length) lines.push(`- Масштабирование ограничено в \`<meta name="viewport">\`: ${r.viewportIssues.join(', ')}`, '');
   if (r.overflowing.length) {
     lines.push('Элементы за краем экрана:', '', '| Элемент | left | right | width |', '|---|---|---|---|');
@@ -206,4 +246,5 @@ for (const r of results) {
   }
 }
 
+await outputJson(args, results);
 await output(args, lines.join('\n'));

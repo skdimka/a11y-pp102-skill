@@ -105,6 +105,12 @@ export async function output(args, text) {
   }
 }
 
+export async function outputJson(args, data) {
+  if (typeof args.json !== 'string') return;
+  await mkdir(dirname(resolve(args.json)), { recursive: true });
+  await writeFile(args.json, JSON.stringify(data, null, 2), 'utf8');
+}
+
 export function cell(value) {
   return String(value ?? '').replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
 }

@@ -15,6 +15,10 @@
     .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
     .field { display: grid; gap: 4px; margin-bottom: 12px; max-width: 24rem; }
     input { font: inherit; padding: 8px; border: 1px solid #555; }
+    nav a, footer a, header > a { display: inline-block; padding: 4px 0; }
+    .spacer { height: 1200px; }
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity .4s .3s, transform .4s .3s; }
+    .reveal.is-visible { opacity: 1; transform: none; }
   </style>
 </head>
 <body>
@@ -44,9 +48,21 @@
       </div>
       <button type="submit">Записаться</button>
     </form>
+    <div class="spacer"></div>
+    <section class="reveal" aria-labelledby="docs-title">
+      <h2 id="docs-title">Документы</h2>
+      <ul>
+        <li><a href="/files/price.pdf">Стоимость услуг (PDF, 80 КБ)</a></li>
+        <li><a href="/files/schedule.pdf">График приёма (PDF, 64 КБ)</a></li>
+      </ul>
+    </section>
   </main>
   <footer>
     <a href="/files/rules.pdf">Правила записи (PDF, 120 КБ)</a>
   </footer>
+  <script>
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add('is-visible')));
+    document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+  </script>
 </body>
 </html>

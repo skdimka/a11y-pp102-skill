@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { AxeBuilder } from '@axe-core/playwright';
-import { WCAG_TO_PP, PP102, parseArgs, collectUrls, output, cell, ppLabel } from './lib.mjs';
+import { WCAG_TO_PP, PP102, parseArgs, collectUrls, output, outputJson, cell, ppLabel } from './lib.mjs';
 
 const RULE_TO_PP = {
   label: ['м', 'а'],
@@ -55,6 +55,12 @@ async function scan(browser, url, width, height) {
       title: document.title.trim(),
       h1: [...document.querySelectorAll('h1')].filter((h) => h.getClientRects().length).length,
       lang: document.documentElement.getAttribute('lang') || '',
+      cyrillicShare: (() => {
+        const text = document.body?.innerText ?? '';
+        const letters = text.match(/\p{L}/gu) ?? [];
+        const cyr = text.match(/\p{Script=Cyrillic}/gu) ?? [];
+        return letters.length ? cyr.length / letters.length : 0;
+      })(),
     }));
     return {
       url,
@@ -141,6 +147,8 @@ function render(results) {
     if (r.h1 === 0) problems.push('нет видимого h1');
     if (r.h1 > 1) problems.push(`видимых h1: ${r.h1}`);
     if (!r.lang) problems.push('нет lang у <html>');
+    else if (r.cyrillicShare > 0.6 && !/^ru\b/i.test(r.lang)) problems.push(`lang="${r.lang}", а текст страницы на русском — скринридер прочитает его с неверным произношением`);
+    else if (r.cyrillicShare < 0.2 && /^ru\b/i.test(r.lang) && r.cyrillicShare > 0) problems.push(`lang="${r.lang}", но текст страницы почти не на русском`);
     if (problems.length) titleIssues.push({ r, problems });
   }
   if (titleIssues.length) {
@@ -175,4 +183,5 @@ for (const url of urls) {
   results.push(await scan(browser, url, width, height));
 }
 await browser.close();
+await outputJson(args, results.map(({ violations, practice, incomplete, ...rest }) => ({ ...rest, violations: (violations ?? []).map((v) => ({ id: v.id, nodes: v.nodes.length })), practice: (practice ?? []).map((v) => ({ id: v.id, nodes: v.nodes.length })) })));
 await output(args, render(results));
